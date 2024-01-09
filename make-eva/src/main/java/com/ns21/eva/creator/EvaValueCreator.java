@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.ns21.common.util.MetaDataConvertUtil.*;
+import static com.ns21.eva.creator.EvaMessageCreator.ITISEVACodeGen;
 
 /**
  * packageName    : com.ns21.eva.creator
@@ -47,12 +48,22 @@ public class EvaValueCreator {
             long timestamp = (timestampStr != null && !timestampStr.isEmpty()) ? (long) Double.parseDouble(timestampStr) : 0;
             int minutesOfYear = minuteOfTheYear(Long.toString(timestamp));
             evaMessage.put("timeStamp", minutesOfYear);
-            evaMessage.put("typeEvent", 0); //주변 차량과 이동상태 itis 코드 필요 instance.json 의 category_name , frame_annotation.json 의  vehicle_state
-            evaMessage.put("priority", "00");
 
+            // "description" 필드에 ITIScode 값을 할당합니다. 주의할 차량(itis 코드)추가  instance.json 의 category_name
+            evaMessage.put("typeEvent", 0); //주변 차량과 itis 코드 필요 instance.json 의 category_name
+            // Determine ITIS codes for the message
+            String categoryName = uuidMap.containsKey("instance_categoryName") ? (String) uuidMap.get("instance_categoryName") : "0";
+            List<Integer> descriptionValues = getDescriptionValuesFromSomeSource(categoryName);
+            // categoryName 또는 vehicleState가 유효하지 않은 경우 이 메시지를 건너뛰거나 생략함. "description"
+            if (descriptionValues.isEmpty()) {
+                continue; // 현재 생성을 건너뛰고 다음 메세지를 생성합니다.
+            }
+            evaMessage.put("description", descriptionValues);
+            // 여기까지 ITIS 코드 추가 로직
+
+            evaMessage.put("priority", "00");
             // 위치 및 방향 정보를 추가합니다.
             Map<String, Object> position = new LinkedHashMap<>();
-
 
             // 위치 및 방향 정보를 추가하는 부분에서의 타입 안전성 확인
             if (uuidMap.get("egoPose_translation") instanceof List) {
@@ -93,5 +104,11 @@ public class EvaValueCreator {
             }
         }
         return messages; // 여러 메시지를 리스트로 반환
+    }
+
+    public static List<Integer> getDescriptionValuesFromSomeSource(String categoryName) {
+
+        // ITIS 코드 변환 함수를 호출하여 descriptionValues를 생성합니다.
+        return ITISEVACodeGen(categoryName);
     }
 }

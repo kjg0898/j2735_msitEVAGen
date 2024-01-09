@@ -1,6 +1,7 @@
 package com.ns21.eva.creator;
 
 import com.ns21.common.enums.j2735.J2735MessageID;
+import com.ns21.common.itis.ItisCodeMapper;
 import com.ns21.common.mist.codec.J2735ToJson;
 import com.ns21.common.mist.codec.JsonToJ2735;
 import com.ns21.common.mist.parser.MetaDataExtracting;
@@ -10,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,6 +30,19 @@ public class EvaMessageCreator extends AbstractVerticle {
     private static int currentIndex = 0;
     private List<String> jsonMessages;
     private long timerId; // 클래스 레벨 변수로 선언
+
+    public static List<Integer> ITISEVACodeGen(String categoryName) {
+        List<Integer> itisCodes = new ArrayList<>();
+
+        // categoryName에 대한 로직
+        if (categoryName != null && !categoryName.equals("0")) {
+            Integer categoryCode = ItisCodeMapper.getCategoryITISCode(categoryName);
+            if (categoryCode != null) { // 유효한 코드가 있을 경우에만 추가
+                itisCodes.add(categoryCode);
+            }
+        }
+        return itisCodes;
+    }
 
     @Override
     public void start()  {
